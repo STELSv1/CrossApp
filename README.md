@@ -6,37 +6,61 @@
 Сутності: `Customer` (клієнт), `Product` (товар), `Order` (замовлення), `OrderLine` (рядок замовлення).
 Призначення: оформлення замовлень клієнтів і підрахунок сум.
 
-## Запуск 1
+## Структура solution
+
+```
+CrossApp/
+  CrossApp.sln
+  README.md
+  .gitignore
+  src/
+    Core/
+      Core.csproj          # class library, multi-target: net8.0;net10.0
+      EnvironmentInfo.cs    # EnvironmentReport + EnvironmentInfo.Collect()
+    Cli/
+      Cli.csproj            # ProjectReference -> Core
+      Program.cs             # лише форматування виводу (таблиця / --json)
+```
+
+Залежність одностороння: `Cli → Core`. `Core` нічого не знає про `Cli`.
+
+Заплановані підкаталоги в `Core` на наступні тижні (поки порожні, з'являться разом
+із першим типом, що в них ляже):
+- `Core/Dto/` — record-типи формату даних (тиждень 3): `ProductDto`, `OrderDto`
+- `Core/Domain/` — сутності з поведінкою та інваріантами (тиждень 4)
+- `Core/Storage/` — реалізації сховищ (тиждень 5)
+
+## Запуск
 
 ```
 dotnet build
 dotnet run --project src/Cli
-```
-
-Вивід у вигляді таблиці (за замовчуванням) або одним JSON-рядком:
-
-```
 dotnet run --project src/Cli -- --json
 ```
 
-## Середовище
-
-.NET SDK 10.0, `<ваша ОС і архітектура, наприклад Windows 11 x64 / Ubuntu 24.04 x64>`
-
-## Публікація self-contained (додаткове завдання)
+## Публікація
 
 ```
 dotnet publish src/Cli -c Release -r win-x64 --self-contained true
-dotnet publish src/Cli -c Release -r linux-x64 --self-contained true
+dotnet publish src/Cli -c Release -r win-x64 --self-contained false
 ```
 
-Розмір каталогів publish:
+| RID       | Режим               | Розмір publish | Потрібен встановлений runtime |
+|-----------|---------------------|-----------------|---------------------------------|
+| win-x64   | self-contained      | 76,86 МБ        | ні                              |
+| win-x64   | framework-dependent | 0,19 МБ         | так (.NET 10)                   |
 
-| RID          | Розмір каталогу publish |
-|--------------|--------------------------|
-| win-x64      | 76,8 МБ                |
-| linux-x64    | 78,8 МБ                |
+Розмір каталогу (PowerShell):
+```
+(Get-ChildItem -Recurse <шлях до publish> | Measure-Object -Property Length -Sum).Sum / 1MB
+```
 
-Розмір каталогу можна отримати командами:
-- Windows (PowerShell): `(Get-ChildItem -Recurse .\src\Cli\bin\Release\net10.0\win-x64\publish | Measure-Object -Property Length -Sum).Sum / 1MB`
-- Linux/macOS: `du -sh src/Cli/bin/Release/net10.0/linux-x64/publish`
+## Multi-targeting
+
+`Core.csproj` таргетить `net8.0;net10.0`. Якщо на машині немає SDK/targeting pack
+для `net8.0`, залиште лише `<TargetFramework>net10.0</TargetFramework>` і зазначте
+причину у звіті (`dotnet --list-sdks` покаже, які SDK встановлені).
+
+## Середовище
+
+.NET SDK 10.0, `<ваша ОС і архітектура>`
