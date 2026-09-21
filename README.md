@@ -57,9 +57,7 @@ dotnet publish src/Cli -c Release -r win-x64 --self-contained false
 
 ## Multi-targeting
 
-`Core.csproj` таргетить `net8.0;net10.0`. Якщо на машині немає SDK/targeting pack
-для `net8.0`, залиште лише `<TargetFramework>net10.0</TargetFramework>` і зазначте
-причину у звіті (`dotnet --list-sdks` покаже, які SDK встановлені).
+`Core.csproj` таргетить `net8.0;net10.0`.
 
 ## Середовище
 
