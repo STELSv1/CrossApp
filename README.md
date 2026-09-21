@@ -50,9 +50,9 @@ dotnet publish src/Cli -c Release -r win-x64 --self-contained false
 | win-x64   | self-contained      | 76,86 МБ        | ні                              |
 | win-x64   | framework-dependent | 0,19 МБ         | так (.NET 10)                   |
 
-Розмір каталогу (PowerShell):
 ```
-(Get-ChildItem -Recurse <шлях до publish> | Measure-Object -Property Length -Sum).Sum / 1MB
+(Get-ChildItem -Recurse .\publish\win-x64-sc | Measure-Object -Property Length -Sum).Sum / 1MB
+(Get-ChildItem -Recurse .\publish\win-x64-fd | Measure-Object -Property Length -Sum).Sum / 1MB
 ```
 
 ## Multi-targeting
@@ -61,4 +61,4 @@ dotnet publish src/Cli -c Release -r win-x64 --self-contained false
 
 ## Середовище
 
-.NET SDK 10.0, `<ваша ОС і архітектура>`
+.NET SDK 10.0 & 8.0 `Windows 10 Pro`
