@@ -3,9 +3,7 @@ using Core.Dto;
 
 namespace Core.Import;
 
-// Додатковий імпортер (додаткове завдання 1): читає ті самі ProductDto з JSON-масиву.
-// Так само, як і CSV-імпортер, НЕ перериває розбір через один пошкоджений запис —
-// кожен елемент масиву обробляється незалежно, помилки збираються з номером запису.
+// Додатковий імпортер (лаба 3): ті самі ProductDto з JSON-масиву.
 public static class ProductJsonImporter
 {
     private static readonly JsonSerializerOptions Options = new()
@@ -53,7 +51,6 @@ public static class ProductJsonImporter
             }
             catch (JsonException ex)
             {
-                // напр. price заданий як текстовий рядок замість числа
                 errors.Add($"запис {index}: {ex.Message}");
             }
         }

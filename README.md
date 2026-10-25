@@ -14,78 +14,65 @@ CrossApp/
   README.md
   .gitignore
   data/
-    sample.csv             # тестові дані CSV (11 коректних + 3 пошкоджені рядки)
-    sample.json            # ті самі дані у JSON (4 коректні + 2 пошкоджені записи)
-    mixed.csv               # додаткове завдання 2: змішані рядки P;/C; (товари й клієнти)
+    sample.csv / sample.json / mixed.csv   # тестові дані імпорту (лаба 3)
   src/
     Core/
-      Core.csproj          # class library, multi-target: net8.0;net10.0
-      EnvironmentInfo.cs    # лаби 1-2: EnvironmentReport + Collect()
-      Dto/
-        ProductDto.cs        # record: Id, Name, Price, Note?
-        CustomerDto.cs       # record: Id, Name, Email?
-        ImportResult.cs      # ImportResult<T>(Items, Errors)
-      Import/
-        ProductCsvImporter.cs  # розбір CSV через switch expression з патернами
-        ProductJsonImporter.cs # додаткове завдання 1: той самий ProductDto з JSON
-        MixedLineImporter.cs   # додаткове завдання 2: рядки за префіксом P;/C;
+      Core.csproj                # class library, multi-target: net8.0;net10.0
+      EnvironmentInfo.cs         # лаби 1-2
+      Dto/                       # ФОРМАТ даних (records, без правил)
+        ProductDto.cs, CustomerDto.cs, ImportResult.cs
+        OrderDto.cs, OrderLineDto.cs          # лаба 4
+      Import/                    # лаба 3: CSV/JSON-імпортери
+      Domain/                    # лаба 4: сутності з поведінкою та інваріантами
+        Order.cs                 # агрегат: фабрика Create, AddLine, Confirm, Cancel, ToDto/FromDto
+        OrderLine.cs             # рядок замовлення: незмінний, фабрика Create
+        OrderStatus.cs           # Draft / Confirmed / Cancelled
     Cli/
-      Cli.csproj             # ProjectReference -> Core
-      Program.cs               # аргументи, виклик імпорту, вивід
+      Cli.csproj                 # ProjectReference -> Core
+      Program.cs                 # сценарії та вивід
 ```
 
-Залежність одностороння: `Cli → Core`. `Core` нічого не знає про `Cli`.
+Залежність одностороння: `Cli → Core`. `Core/Domain` не залежить ні від `Console`, ні від `File`, ні від `Cli`.
 
-## Формат файлу data/sample.csv
+## Інваріанти доменної моделі (лаба 4)
 
-- Роздільник колонок: `;` (крапка з комою) — не конфліктує з десятковою крапкою в ціні.
-- Колонки: `id;name;price`.
-- Перший рядок — заголовок (`id;name;price`), розпізнається і пропускається автоматично;
-  файл без заголовка так само коректно імпортується (перший рядок просто буде розібраний
-  як звичайні дані).
-- Кодування: UTF-8 (читається явно через `File.ReadAllLines(path, Encoding.UTF8)`).
-- Ціна парситься з `CultureInfo.InvariantCulture`, роздільник дробової частини — крапка
-  (`24999.99`, не `24999,99`).
+| # | Правило | Виняток | Де перевіряється |
+|---|---------|---------|------------------|
+| 1 | Номер замовлення і ідентифікатор клієнта не порожні | `ArgumentException` | `Order.Create` |
+| 2 | У рядку: Id товару і назва не порожні | `ArgumentException` | `OrderLine.Create` |
+| 3 | Ціна в рядку не від'ємна | `ArgumentOutOfRangeException` | `OrderLine.Create` |
+| 4 | Кількість у рядку більша за нуль | `ArgumentOutOfRangeException` | `OrderLine.Create` |
+| 5 | Рядки додаються лише до замовлення зі статусом Draft | `InvalidOperationException` | `Order.AddLine` |
+| 6 | Не можна підтвердити порожнє замовлення | `InvalidOperationException` | `Order.Confirm` |
+| 7 | Допустимі лише переходи Draft→Confirmed, Draft→Cancelled, Confirmed→Cancelled | `InvalidOperationException` | `Order.Confirm` / `Order.Cancel` (через `CanMove`) |
+| 8 | `FromDto` проходить ті самі перевірки (відновлення через `Create`/`AddLine`/`Confirm`) і відхиляє невідомий статус | `ArgumentException` / `InvalidOperationException` | `Order.FromDto` |
+
+Стан захищено: властивості лише для читання (`private set` / без set), конструктори приватні,
+колонка рядків назовні — `IReadOnlyList<OrderLine>`.
 
 ## Запуск
 
 ```
 dotnet build
-dotnet run --project src/Cli                        # імпорт data/sample.csv (за замовчуванням)
-dotnet run --project src/Cli -- data/sample.csv       # імпорт конкретного CSV-файлу
-dotnet run --project src/Cli -- data/sample.json       # той самий імпорт, але з JSON (додаткове завдання 1)
-dotnet run --project src/Cli -- --json                 # імпорт data/sample.csv, вивід одним JSON-рядком
-dotnet run --project src/Cli -- --mixed                # data/mixed.csv: товари (P;) і клієнти (C;) одним switch (додаткове завдання 2)
-dotnet run --project src/Cli -- --env                    # інформація про середовище (лаби 1-2)
-dotnet run --project src/Cli -- --env --json              # те саме, у форматі JSON
+dotnet run --project src/Cli -- --domain       # лаба 4: сценарій успіху + порушення інваріантів
+dotnet run --project src/Cli                    # лаба 3: імпорт data/sample.csv
+dotnet run --project src/Cli -- data/sample.json
+dotnet run --project src/Cli -- --mixed
+dotnet run --project src/Cli -- --env           # лаби 1-2: інформація про середовище
 ```
 
-Імпортер обирається автоматично за розширенням файлу (`.csv` → `ProductCsvImporter`,
-`.json` → `ProductJsonImporter`) — обидва повертають однаковий `ImportResult<ProductDto>`.
+## Формат файлу data/sample.csv
 
-Після кожного імпорту (звичайного або `--mixed`) виводиться статистика одним рядком:
-`Усього: N, прийнято: X, пропущено: Y (Z% помилок)` (додаткове завдання 3).
+Роздільник `;`, колонки `id;name;price`, перший рядок — заголовок (необов'язковий),
+кодування UTF-8, ціна парситься через `CultureInfo.InvariantCulture` (крапка).
 
 ## Публікація
-
-```
-dotnet publish src/Cli -c Release -r win-x64 --self-contained true  -o publish/win-x64-sc
-dotnet publish src/Cli -c Release -r win-x64 --self-contained false -o publish/win-x64-fd
-```
 
 | RID       | Режим               | Розмір publish | Потрібен встановлений runtime |
 |-----------|---------------------|-----------------|--------------------------------|
 | win-x64   | self-contained      | 76,86 МБ        | ні                              |
 | win-x64   | framework-dependent | 0,19 МБ         | так (.NET 10)                   |
 
-## Multi-targeting
-
-`Core.csproj` і `Cli.csproj` таргетять `net8.0;net10.0`.
-
-Заплановані підкаталоги в `Core` на наступні тижні:
-- `Core/Domain/` — сутності з поведінкою та інваріантами (тиждень 4)
-- `Core/Storage/` — реалізації сховищ, DTO стануть форматом зберігання (тиждень 5)
-
 ## Середовище
 
-.NET SDK 10.0, `Windows 10 Pro`
+.NET SDK 10.0, `<ваша ОС і архітектура>`

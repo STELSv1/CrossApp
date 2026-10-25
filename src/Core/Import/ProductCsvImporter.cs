@@ -46,25 +46,14 @@ public static class ProductCsvImporter
 
         return parts switch
         {
-            // патерн властивості — кількість колонок
             { Length: < 3 } => new ParseFailed($"очікую 3 колонки, отримав {parts.Length}"),
-
-            // патерн списку з константою "" — порожня назва
             [_, "", _] => new ParseFailed("назва товару порожня"),
-
-            // патерн списку + охоронна умова when — порожній Id
             [var id, _, _] when string.IsNullOrWhiteSpace(id)
                 => new ParseFailed("Id порожній"),
-
-            // патерн списку + when з TryParse — некоректна або від'ємна ціна
             [_, _, var price] when !decimal.TryParse(price, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal p) || p < 0
                 => new ParseFailed($"ціна '{price}' не є коректним невід'ємним числом"),
-
-            // успішний випадок — усі три поля коректні
             [var id, var name, var price]
                 => new ParseOk(new ProductDto(id, name, decimal.Parse(price, NumberStyles.Number, CultureInfo.InvariantCulture))),
-
-            // патерн-заглушка (discard) — забагато колонок
             _ => new ParseFailed($"занадто багато колонок: {parts.Length}")
         };
     }

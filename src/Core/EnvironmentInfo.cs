@@ -24,7 +24,7 @@ public static class EnvironmentInfo
 
     public static EnvironmentReport Collect() => new(
         Title: "CrossApp – практикум з крос-платформного програмування",
-        Student: "Моргулець Валентин, група ФЕІ-37",
+        Student: "Прізвище Ім'я, група ___",
         Domain: "Замовлення (клієнти, товари, замовлення, рядки замовлення)",
         OsDescription: RuntimeInformation.OSDescription,
         FrameworkDescription: RuntimeInformation.FrameworkDescription,
@@ -34,7 +34,6 @@ public static class EnvironmentInfo
         BaseDirectory: AppContext.BaseDirectory,
         BuildNote: BuildNote);
 
-    // Ручне визначення RID: показує, з чого складається рядок win-x64.
     private static string DetectRid()
     {
         string os =
