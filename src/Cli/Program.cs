@@ -1,4 +1,4 @@
-using Core;
+﻿using Core;
 using Core.Domain;
 using Core.Dto;
 using Core.Import;
@@ -75,6 +75,21 @@ static int RunDomainDemo()
     Console.WriteLine($"  Прийнято: {batch.Items.Count}, відхилено: {batch.Errors.Count}");
     foreach (string e in batch.Errors)
         Console.WriteLine($"  ! {e.ReplaceLineEndings(" ")}");
+
+    Console.WriteLine();
+    Console.WriteLine("=== Додатково: переходи станів ===");
+    Order flow = Order.Create("ORD-010", "CU-010");
+    flow.AddLine("O-001", "Ноутбук ASUS VivoBook 15", 24999.99m, 1);
+    Console.WriteLine($"  початковий стан: {flow.Status}");
+
+    flow.Confirm();
+    Console.WriteLine($"  Draft -> {flow.Status}");
+    TryDo("Confirmed -> Confirmed", () => flow.Confirm());
+
+    flow.Cancel();
+    Console.WriteLine($"  Confirmed -> {flow.Status}");
+    TryDo("Cancelled -> Cancelled", () => flow.Cancel());
+    TryDo("рядок у скасоване замовлення", () => flow.AddLine("O-002", "Миша", 349.50m, 1));
 
     return 0;
 }
