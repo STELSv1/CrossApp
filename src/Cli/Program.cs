@@ -11,6 +11,7 @@ if (args.Contains("--env")) return LegacyModes.RunEnvironmentReport(args.Contain
 if (args.Contains("--domain")) return LegacyModes.RunDomainDemo();
 if (args.Contains("--mixed")) return LegacyModes.RunMixedImport(args);
 if (args.Contains("--import")) return LegacyModes.RunImport(args);
+if (args.Contains("--events")) return EventsMode.Run(args);
 
 return RunCatalogScenario(args);
 

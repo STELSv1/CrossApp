@@ -91,4 +91,19 @@ dotnet run --project src/Cli -f net10.0 -- --env        # лаби 1-2: сере
 
 ## Середовище
 
-.NET SDK 10.0, `Windows 10 Pro`
+.NET SDK 10.0, `<ваша ОС і архітектура>`
+
+## Події (лабораторна 6)
+
+| Подія | Коли піднімається |
+|---|---|
+| `OrderService.Changed` (`EventHandler<OrderChangedEventArgs>`) | після успішного `CreateOrder`, `AddLine`, `Confirm` |
+
+Підписники: `EventsMode.OnOrderChanged` (через `INotificationSink`: `ConsoleSink`, `FileSink`) і лямбда-лічильник.
+Лог-файл: `src\Cli\bin\Debug\net10.0\logs\app.log`.
+
+```
+dotnet run --project src/Cli -f net10.0 -- --events
+```
+
+Делегати: `Func` — `OrderService.Search(predicate)`; `Action<string>` — `ProductCsvImporter.Load(path, onSkipped)`.
