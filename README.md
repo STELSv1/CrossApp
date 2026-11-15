@@ -107,3 +107,28 @@ dotnet run --project src/Cli -f net10.0 -- --events
 ```
 
 Делегати: `Func` — `OrderService.Search(predicate)`; `Action<string>` — `ProductCsvImporter.Load(path, onSkipped)`.
+
+## Звіти LINQ (лабораторна 7)
+
+Усі запити — у `src/Core/Reports/ReportService.cs`, приймають `IEnumerable<Order>`, повертають DTO.
+
+| Команда | Метод | Питання, на яке відповідає |
+|---|---|---|
+| `report-top` | `TopCustomers` | які клієнти принесли найбільше виручки (без скасованих) |
+| `report-big` | `Expensive` | які замовлення дорожчі за 1000 |
+| `report-groups` | `ByStatus` | як розподілені замовлення за статусами |
+| `report-groups-q` | `ByStatusQuery` | те саме в синтаксисі запитів, з перевіркою збігу |
+| `report-sum` | `Totals` | підсумки: кількість, виручка, середній чек, максимум |
+| `report-customers` | `CustomerRevenue` | GroupJoin клієнтів із замовленнями |
+| `report-deferred` | `DeferredDemo` | демо відкладеного виконання |
+| `report-bench` | `ReportBenchmark.Run` | порівняння часу на 100 000 записах |
+
+```
+dotnet run --project src/Cli -f net10.0 -- report-top
+dotnet run --project src/Cli -f net10.0 -- report-groups
+dotnet run --project src/Cli -f net10.0 -- report-sum
+```
+
+**Коли виконується запит.** Оператори `Where`, `Select`, `OrderBy`, `GroupBy` лише описують запит. Код виконується під час перебирання (`foreach`) або завершального оператора (`ToList`, `Count`, `Sum`). Тому в `DeferredDemo` два виклики `Count()` дають різні числа: запит перевиконується на поточному стані джерела, а не на тому, що було під час його побудови. Знімок `ToList()` зафіксовано і не змінюється після очищення джерела.
+
+**Власний метод-розширення.** `LinqExtensions.TopBy` (додаткове завдання 2) використовується в `TopCustomers`.
