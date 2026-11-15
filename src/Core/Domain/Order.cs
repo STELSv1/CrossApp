@@ -42,7 +42,7 @@ public sealed class Order
     {
         // 1) стан: рядки можна додавати лише до чернетки
         if (Status != OrderStatus.Draft)
-            throw new InvalidOperationException(
+            throw new DomainException(
                 $"Замовлення {Id} має статус {Status}, рядки додавати не можна");
 
         // 2) аргументи: усі перевірки всередині OrderLine.Create — ДО зміни стану
@@ -57,7 +57,7 @@ public sealed class Order
         EnsureCanMoveTo(OrderStatus.Confirmed);
 
         if (_lines.Count == 0)
-            throw new InvalidOperationException(
+            throw new DomainException(
                 $"Замовлення {Id} порожнє, підтвердити його неможливо");
 
         Status = OrderStatus.Confirmed;
@@ -81,7 +81,7 @@ public sealed class Order
     private void EnsureCanMoveTo(OrderStatus target)
     {
         if (!CanMove(Status, target))
-            throw new InvalidOperationException(
+            throw new DomainException(
                 $"Замовлення {Id}: перехід зі стану {Status} у {target} неможливий");
     }
 
@@ -135,7 +135,7 @@ public sealed class Order
             {
                 items.Add(FromDto(dto));
             }
-            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+            catch (Exception ex) when (ex is ArgumentException or DomainException)
             {
                 errors.Add($"запис {index} ({dto?.Id}): {ex.Message}");
             }

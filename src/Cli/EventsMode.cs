@@ -85,7 +85,7 @@ internal static class EventsMode
             action();
             Console.WriteLine($"  {title}: виняток НЕ спрацював!");
         }
-        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        catch (Exception ex) when (ex is ArgumentException or DomainException)
         {
             Console.WriteLine($"  {title}: {ex.GetType().Name} — {ex.Message}");
         }

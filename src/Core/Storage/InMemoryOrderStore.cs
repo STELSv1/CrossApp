@@ -17,7 +17,7 @@ public sealed class InMemoryOrderStore(IEnumerable<Order>? seed = null) : IOrder
     {
         ArgumentNullException.ThrowIfNull(order);
         if (_items.ContainsKey(order.Id))
-            throw new InvalidOperationException($"Замовлення з id={order.Id} уже існує.");
+            throw new DomainException($"Замовлення з id={order.Id} уже існує.");
         _items.Add(order.Id, order);
     }
 
@@ -25,7 +25,7 @@ public sealed class InMemoryOrderStore(IEnumerable<Order>? seed = null) : IOrder
     {
         ArgumentNullException.ThrowIfNull(order);
         if (!_items.ContainsKey(order.Id))
-            throw new InvalidOperationException($"Немає замовлення з id={order.Id} для оновлення.");
+            throw new DomainException($"Немає замовлення з id={order.Id} для оновлення.");
         _items[order.Id] = order;
     }
 

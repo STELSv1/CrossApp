@@ -132,3 +132,22 @@ dotnet run --project src/Cli -f net10.0 -- report-sum
 **Коли виконується запит.** Оператори `Where`, `Select`, `OrderBy`, `GroupBy` лише описують запит. Код виконується під час перебирання (`foreach`) або завершального оператора (`ToList`, `Count`, `Sum`). Тому в `DeferredDemo` два виклики `Count()` дають різні числа: запит перевиконується на поточному стані джерела, а не на тому, що було під час його побудови. Знімок `ToList()` зафіксовано і не змінюється після очищення джерела.
 
 **Власний метод-розширення.** `LinqExtensions.TopBy` (додаткове завдання 2) використовується в `TopCustomers`.
+
+## Асинхронність, скасування, тести (лабораторна 8)
+
+Доменні винятки: `DomainException` (порушення бізнес-правила, наприклад «замовлення вже підтверджено»).
+`ArgumentException` — некоректний аргумент. `OperationCanceledException` — скасування, окремо від помилок.
+
+Асинхронний імпорт замовлень:
+```
+dotnet run --project src/Cli -f net10.0 -- --import-async                       # data/orders.json: 6 замовлень
+dotnet run --project src/Cli -f net10.0 -- --import-async data/orders-broken.json  # Дані відхилено: Запис 2 ...
+dotnet run --project src/Cli -f net10.0 -- --import-async --timeout 0           # Імпорт скасовано.
+```
+Ctrl+C під час імпорту також дає «Імпорт скасовано.». Файли `catalog.json` і логи лежать у `bin\Debug\net10.0\`.
+
+Тести (xUnit, без диска й без `Cli`):
+```
+dotnet test
+```
+Тести: `tests/Core.Tests/`. Сховище в тестах — `InMemoryOrderStore`; один тест працює з тимчасовим файлом і видаляє його у `finally`.

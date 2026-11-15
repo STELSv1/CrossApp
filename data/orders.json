@@ -1,0 +1,8 @@
+[
+  { "id": "ORD-201", "customerId": "CU-001", "status": "Draft",     "lines": [ { "productId": "P-001", "name": "Цемент М400 25кг", "price": 185.50, "quantity": 4 } ] },
+  { "id": "ORD-202", "customerId": "CU-002", "status": "Confirmed", "lines": [ { "productId": "P-002", "name": "Пісок будівельний", "price": 420.00, "quantity": 2 } ] },
+  { "id": "ORD-203", "customerId": "CU-003", "status": "Draft",     "lines": [ { "productId": "P-003", "name": "Цегла червона", "price": 9.80, "quantity": 300 } ] },
+  { "id": "ORD-204", "customerId": "CU-001", "status": "Confirmed", "lines": [ { "productId": "P-004", "name": "Фарба 10л", "price": 645.00, "quantity": 1 } ] },
+  { "id": "ORD-205", "customerId": "CU-004", "status": "Draft",     "lines": [ { "productId": "P-005", "name": "Шпаклівка фінішна", "price": 58.00, "quantity": 6 } ] },
+  { "id": "ORD-206", "customerId": "CU-005", "status": "Cancelled", "lines": [ { "productId": "P-001", "name": "Цемент М400 25кг", "price": 185.50, "quantity": 2 } ] }
+]

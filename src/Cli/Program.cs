@@ -14,6 +14,7 @@ if (args.Contains("--domain")) return LegacyModes.RunDomainDemo();
 if (args.Contains("--mixed")) return LegacyModes.RunMixedImport(args);
 if (args.Contains("--import")) return LegacyModes.RunImport(args);
 if (args.Contains("--events")) return EventsMode.Run(args);
+if (args.Contains("--import-async")) return await AsyncImportMode.RunAsync(args);
 
 // Лабораторна 7: підкоманди звітів (report-top, report-big, report-groups, ...)
 string? reportCommand = args.FirstOrDefault(a => a.StartsWith("report-"));
@@ -158,7 +159,7 @@ static void TryDo(string title, Action action)
         action();
         Console.WriteLine($"  {title}: виняток НЕ спрацював!");
     }
-    catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+    catch (Exception ex) when (ex is ArgumentException or DomainException)
     {
         Console.WriteLine($"  {title}: {ex.GetType().Name} — {ex.Message}");
     }

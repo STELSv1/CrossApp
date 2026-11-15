@@ -1,0 +1,4 @@
+[
+  { "id": "ORD-301", "customerId": "CU-001", "status": "Draft", "lines": [ { "productId": "P-001", "name": "Цемент", "price": 185.50, "quantity": 2 } ] },
+  { "id": "ORD-302", "customerId": "CU-002", "status": "Draft", "lines": [ { "productId": "P-002", "name": "Пісок", "price": 420.00, "quantity": 0 } ] }
+]
