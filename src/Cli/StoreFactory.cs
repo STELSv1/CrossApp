@@ -4,11 +4,10 @@ using Core.Storage;
 
 namespace Cli;
 
-// Додаткове завдання 3: фабрика сховищ. Вся логіка вибору реалізації — в одному місці,
-// Program.cs лише викликає Create(args).
+// Фабрика сховищ. Шлях до файлу береться з конфігурації (AppSettings), а не зашитий у коді.
 internal static class StoreFactory
 {
-    public static string DataPath => Path.Combine(AppContext.BaseDirectory, "data", "catalog.json");
+    public static string DataPath => AppSettings.DataFilePath;
 
     public static IOrderStore Create(string[] args)
     {
@@ -16,6 +15,6 @@ internal static class StoreFactory
             ? new FileOrderStore(DataPath)
             : new InMemoryOrderStore(SampleData.Orders());
 
-        return args.Contains("--cache") ? new CachingOrderStore(store) : store;
+        return args.Contains("--cache") ? new Core.Storage.CachingOrderStore(store) : store;
     }
 }

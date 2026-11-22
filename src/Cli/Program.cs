@@ -8,6 +8,17 @@ using System.Text.Json;
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
+// Лабораторна 9: конфігурація завантажується першою. Помилка конфігурації блокує запуск.
+string? configError = AppSettings.Load(args);
+if (configError is not null)
+{
+    Console.WriteLine($"Помилка конфігурації: {configError}");
+    return 2;
+}
+
+if (args.Contains("--show-config")) return AppSettings.Print();
+if (args.Contains("--export")) return await ExportMode.RunAsync(args);
+
 // Режими лаб 1–4 і 6
 if (args.Contains("--env")) return LegacyModes.RunEnvironmentReport(args.Contains("--json"));
 if (args.Contains("--domain")) return LegacyModes.RunDomainDemo();
@@ -16,7 +27,7 @@ if (args.Contains("--import")) return LegacyModes.RunImport(args);
 if (args.Contains("--events")) return EventsMode.Run(args);
 if (args.Contains("--import-async")) return await AsyncImportMode.RunAsync(args);
 
-// Лабораторна 7: підкоманди звітів (report-top, report-big, report-groups, ...)
+// Лабораторна 7: звіти
 string? reportCommand = args.FirstOrDefault(a => a.StartsWith("report-"));
 if (reportCommand is not null)
     return RunReport(reportCommand, args);
@@ -24,7 +35,6 @@ if (reportCommand is not null)
 // Лабораторна 5: сховища
 return RunCatalogScenario(args);
 
-// Program.cs лише викликає ReportService і друкує результат. Жодного Where/GroupBy тут немає.
 static int RunReport(string command, string[] args)
 {
     IOrderStore store = StoreFactory.Create(args);
@@ -107,7 +117,6 @@ static void PrintGroups(IReadOnlyList<GroupSummary> groups)
         Console.WriteLine($"  {g.Key,-10} замовлень: {g.Count,3}  сума: {g.Total,12:F2}");
 }
 
-// Лабораторна 5: сценарій сховищ (без змін логіки)
 static int RunCatalogScenario(string[] args)
 {
     IOrderStore store = StoreFactory.Create(args);

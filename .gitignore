@@ -13,3 +13,8 @@ Thumbs.db
 # Publish output
 publish/
 *.publish.xml
+
+# Лабораторна 9: runtime-дані та локальні профілі
+data-dev/
+*.tmp
+export-orders.json

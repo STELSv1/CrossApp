@@ -27,7 +27,7 @@ public sealed class OrderService(IOrderStore store)
     public void AddLine(string orderId, string productId, string name, decimal price, int quantity)
     {
         Order order = Require(orderId);
-        order.AddLine(productId, name, price, quantity); // якщо інваріант кине виняток, події не буде
+        order.AddLine(productId, name, price, quantity);
         _store.Update(order);
         OnChanged(order, OrderChangeKind.LineAdded);
     }
@@ -44,22 +44,48 @@ public sealed class OrderService(IOrderStore store)
 
     public Order? Find(string id) => _store.GetById(id);
 
-    // Func: сервіс повертає результат, тож тут потрібен делегат, а не подія.
     public IReadOnlyList<Order> Search(Func<Order, bool> predicate) => _store.Where(predicate);
 
-
-    // Лабораторна 8: асинхронний імпорт. Імпортер передається ззовні (ручний DI), скасування — через ct.
-    public async Task<int> ImportAsync(IOrderImporter importer, string path, CancellationToken ct = default)
+    // Лабораторна 8: імпорт з повним читанням. Додаткове завдання 3: прогрес через IProgress<int>.
+    public async Task<int> ImportAsync(
+        IOrderImporter importer,
+        string path,
+        CancellationToken ct = default,
+        IProgress<int>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(importer);
         IReadOnlyList<Order> items = await importer.LoadAsync(path, ct);
 
         int added = 0;
-        foreach (Order item in items)
+        for (int i = 0; i < items.Count; i++)
+        {
+            ct.ThrowIfCancellationRequested();
+            Order item = items[i];
+
+            if (_store.GetById(item.Id) is null)     // ідемпотентність
+            {
+                _store.Add(item);
+                OnChanged(item, OrderChangeKind.Created);
+                added++;
+            }
+
+            progress?.Report((i + 1) * 100 / items.Count);
+        }
+        return added;
+    }
+
+    // Додаткове завдання 1: потоковий імпорт — кожне замовлення обробляється одразу після читання.
+    public async Task<int> ImportStreamAsync(IOrderStreamImporter importer, string path, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(importer);
+
+        int added = 0;
+        await foreach (Order item in importer.StreamAsync(path, ct).WithCancellation(ct))
         {
             ct.ThrowIfCancellationRequested();
             if (_store.GetById(item.Id) is not null)
-                continue;                          // ідемпотентність: повторний імпорт не дублює
+                continue;
+
             _store.Add(item);
             OnChanged(item, OrderChangeKind.Created);
             added++;

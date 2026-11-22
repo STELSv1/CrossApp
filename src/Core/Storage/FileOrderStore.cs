@@ -7,8 +7,8 @@ using Core.Dto;
 
 namespace Core.Storage;
 
-// Файлова реалізація того самого контракту: кеш у пам'яті, дозавантаження при першому зверненні,
-// запис на диск після кожної зміни. На диск ідуть DTO (формат тижня 3), не сутності.
+// Файлова реалізація IOrderStore: кеш у пам'яті, читання при першому зверненні,
+// атомарний запис після кожної зміни (.tmp + File.Move). На диск ідуть DTO.
 public sealed class FileOrderStore(string path) : IOrderStore
 {
     private static readonly JsonSerializerOptions Options = new()
@@ -27,10 +27,10 @@ public sealed class FileOrderStore(string path) : IOrderStore
 
         if (File.Exists(_path))
         {
-            List<OrderDto>? dtos = JsonSerializer.Deserialize<List<OrderDto>>(File.ReadAllText(_path));
+            List<OrderDto>? dtos = JsonSerializer.Deserialize<List<OrderDto>>(File.ReadAllText(_path), Options);
             foreach (OrderDto dto in dtos ?? [])
             {
-                Order order = Order.FromDto(dto); // відновлення через перевірки сутності
+                Order order = Order.FromDto(dto);   // повторно перевіряє інваріанти
                 _cache[order.Id] = order;
             }
         }
@@ -45,7 +45,9 @@ public sealed class FileOrderStore(string path) : IOrderStore
             Directory.CreateDirectory(directory);
 
         List<OrderDto> dtos = _cache.Values.Select(o => o.ToDto()).ToList();
-        File.WriteAllText(_path, JsonSerializer.Serialize(dtos, Options));
+        string tmp = _path + ".tmp";
+        File.WriteAllText(tmp, JsonSerializer.Serialize(dtos, Options));
+        File.Move(tmp, _path, overwrite: true);
     }
 
     public IReadOnlyList<Order> List()

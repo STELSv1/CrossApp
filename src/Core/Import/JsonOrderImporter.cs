@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Core.Abstractions;
 using Core.Domain;
@@ -5,8 +6,9 @@ using Core.Dto;
 
 namespace Core.Import;
 
-// Справжній async-ввід-вивід: FileStream з useAsync і DeserializeAsync, без Task.Run.
-public sealed class JsonOrderImporter : IOrderImporter
+// Справжній async-ввід-вивід: FileStream з useAsync, без Task.Run.
+// Реалізує два контракти: повне читання (LoadAsync) і потокове (StreamAsync).
+public sealed class JsonOrderImporter : IOrderImporter, IOrderStreamImporter
 {
     private static readonly JsonSerializerOptions Options = new() { PropertyNameCaseInsensitive = true };
 
@@ -34,5 +36,38 @@ public sealed class JsonOrderImporter : IOrderImporter
             }
         }
         return result;
+    }
+
+    // Потоковий режим: кожен запис читається і перевіряється окремо, без списку всього файлу.
+    public async IAsyncEnumerable<Order> StreamAsync(
+        string path,
+        [EnumeratorCancellation] CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        await using var stream = new FileStream(
+            path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
+
+        int index = 0;
+        await foreach (OrderDto? dto in JsonSerializer.DeserializeAsyncEnumerable<OrderDto>(stream, Options, ct))
+        {
+            index++;
+            ct.ThrowIfCancellationRequested();
+
+            if (dto is null)
+                throw new DomainException($"Запис {index}: порожній об'єкт.");
+
+            Order order;
+            try
+            {
+                order = Order.FromDto(dto);
+            }
+            catch (Exception ex) when (ex is ArgumentException or DomainException)
+            {
+                throw new DomainException($"Запис {index}: {ex.Message}", ex);
+            }
+
+            yield return order;
+        }
     }
 }
